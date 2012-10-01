@@ -9,21 +9,23 @@ using Orchard.Caching;
 
 namespace Associativy.Neo4j.Services
 {
+    // TODO
+    // Is it really necessary, or usage through StandardPathFinder is good enough?
     public class Neo4jPathFinder : Neo4jService, INeo4jPathFinder
     {
-        private readonly INeo4jGraphClientPool _graphClientRepository;
+        private readonly INeo4jGraphClientPool _graphClientPool;
         private readonly IGraphEditor _graphEditor;
         private readonly IGraphEventMonitor _graphEventMonitor;
         private readonly ICacheManager _cacheManager;
 
         public Neo4jPathFinder(
-            INeo4jGraphClientPool graphClientRepository,
+            INeo4jGraphClientPool graphClientPool,
             IGraphManager graphManager,
             IGraphEditor graphEditor,
             IGraphEventMonitor graphEventMonitor,
             ICacheManager cacheManager)
         {
-            _graphClientRepository = graphClientRepository;
+            _graphClientPool = graphClientPool;
         }
 
 
