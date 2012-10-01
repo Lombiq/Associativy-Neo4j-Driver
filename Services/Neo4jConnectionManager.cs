@@ -28,7 +28,7 @@ namespace Associativy.Neo4j.Services
 
             var node1Reference = GetNodeReference(node1Id);
             if (node1Reference == null) return false;
-            return node1Reference.Out<AssociativyNode>(AssociativyNodeConnection.TypeKey, node => node.Id == node2Id).GremlinCount() != 0;
+            return node1Reference.Both<AssociativyNode>(AssociativyNodeConnection.TypeKey, node => node.Id == node2Id).GremlinCount() != 0;
         }
 
         public void Connect(IGraphContext graphContext, int node1Id, int node2Id)
@@ -58,7 +58,7 @@ namespace Associativy.Neo4j.Services
 
             _graphClient.DeleteRelationship(
                 GetNodeReference(node1Id)
-                .Out<AssociativyNode>(AssociativyNodeConnection.TypeKey, node => node.Id == node2Id).Single()
+                .Both<AssociativyNode>(AssociativyNodeConnection.TypeKey, node => node.Id == node2Id).Single()
                 .BackE(AssociativyNodeConnection.TypeKey).Single().Reference);
         }
 
@@ -99,7 +99,7 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return Enumerable.Empty<int>();
 
-            return nodeReference.Out<AssociativyNode>(AssociativyNodeConnection.TypeKey).Select(node => node.Data.Id);
+            return nodeReference.Both<AssociativyNode>(AssociativyNodeConnection.TypeKey).Select(node => node.Data.Id);
         }
 
         public int GetNeighbourCount(IGraphContext graphContext, int nodeId)
@@ -109,7 +109,7 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return 0;
 
-            return nodeReference.OutE(AssociativyNodeConnection.TypeKey).GremlinCount();
+            return nodeReference.BothE(AssociativyNodeConnection.TypeKey).GremlinCount();
         }
 
 
