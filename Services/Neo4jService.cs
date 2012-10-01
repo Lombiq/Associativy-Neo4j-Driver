@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Piedone.HelpfulLibraries.Utilities;
 
 namespace Associativy.Neo4j.Services

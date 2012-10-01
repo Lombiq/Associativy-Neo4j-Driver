@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Associativy.Services;
+﻿using Associativy.Services;
 
 namespace Associativy.Neo4j.Services
 {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Associativy.Services;
-using Orchard;
-using Piedone.HelpfulLibraries.Utilities;
+﻿using Associativy.Services;
 
 namespace Associativy.Neo4j.Services
 {

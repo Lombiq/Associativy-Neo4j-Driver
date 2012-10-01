@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using Associativy.Services;
-using Associativy.GraphDiscovery;
 using Associativy.EventHandlers;
+using Associativy.GraphDiscovery;
+using Associativy.Services;
 using Orchard.Caching;
 
 namespace Associativy.Neo4j.Services

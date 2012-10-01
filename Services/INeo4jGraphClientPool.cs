@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Orchard;
 using Neo4jClient;
-using System.Security.Policy;
+using Orchard;
 
 namespace Associativy.Neo4j.Services
 {

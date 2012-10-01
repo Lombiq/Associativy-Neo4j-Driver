@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Associativy.GraphDiscovery;
 using Associativy.Models;
+using Associativy.Models.Nodes;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
-using Piedone.HelpfulLibraries.Utilities;
-using Associativy.Models.Nodes;
 
 namespace Associativy.Neo4j.Services
 {
