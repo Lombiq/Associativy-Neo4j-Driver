@@ -95,12 +95,8 @@
       <Name>Piedone.HelpfulLibraries</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Controllers\SetupController.cs" />
-    <Compile Include="Neo4jTestGraphProvider.cs" />
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
