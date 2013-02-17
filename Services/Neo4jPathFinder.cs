@@ -15,6 +15,7 @@ namespace Associativy.Neo4j.Services
         private readonly IGraphEventMonitor _graphEventMonitor;
         private readonly ICacheManager _cacheManager;
 
+
         public Neo4jPathFinder(
             INeo4jGraphClientPool graphClientPool,
             IGraphManager graphManager,
