@@ -24,6 +24,8 @@ namespace Associativy.Neo4j.Services
 
         public bool AreNeighbours(IGraphContext graphContext, int node1Id, int node2Id)
         {
+            if (node1Id == node2Id) return true;
+
             TryInit();
 
             var node1Reference = GetNodeReference(node1Id);
