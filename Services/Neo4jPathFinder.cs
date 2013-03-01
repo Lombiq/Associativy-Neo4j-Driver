@@ -24,6 +24,9 @@ namespace Associativy.Neo4j.Services
             ICacheManager cacheManager)
         {
             _graphClientPool = graphClientPool;
+            _graphEditor = graphEditor;
+            _graphEventMonitor = graphEventMonitor;
+            _cacheManager = cacheManager;
         }
 
 
