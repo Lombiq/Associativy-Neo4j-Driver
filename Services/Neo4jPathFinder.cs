@@ -1,6 +1,7 @@
 ﻿using System;
 using Associativy.EventHandlers;
 using Associativy.GraphDiscovery;
+using Associativy.Models.PathFinder;
 using Associativy.Services;
 using Orchard.Caching;
 
@@ -30,14 +31,16 @@ namespace Associativy.Neo4j.Services
         }
 
 
-        public PathResult FindPaths(IGraphContext graphContext, int startNodeId, int targetNodeId, int maxDistance = 3, bool useCache = false)
+        public PathResult FindPaths(IGraphContext graphContext, int startNodeId, int targetNodeId, IPathFinderSettings settings)
         {
-            if (useCache)
+            if (settings == null) settings = PathFinderSettings.Default;
+
+            if (settings.UseCache)
             {
-                return _cacheManager.Get("Associativy.Paths." + graphContext.GraphName + startNodeId.ToString() + targetNodeId.ToString() + maxDistance, ctx =>
+                return _cacheManager.Get("Associativy.Paths." + graphContext.GraphName + startNodeId.ToString() + targetNodeId.ToString() + settings.MaxDistance, ctx =>
                 {
                     _graphEventMonitor.MonitorChanged(graphContext, ctx);
-                    return FindPaths(graphContext, startNodeId, targetNodeId, maxDistance, false);
+                    return FindPaths(graphContext, startNodeId, targetNodeId, settings);
                 });
             }
 
