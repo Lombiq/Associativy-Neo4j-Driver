@@ -26,14 +26,16 @@ using Associativy.Tests;
 using Associativy.Neo4j.Tests.Stubs;
 using Associativy.Neo4j.Services;
 using Associativy.Models.Services;
+using System;
+using Associativy.Tests.Stubs;
 
 namespace Associativy.Neo4j.Tests.Services
 {
     [TestFixture]
     public class Neo4jPathFinderTests : ContentManagerEnabledTestBase
     {
-        private IPathFinder _pathFinder;
-        private IGraphContext _graphContext = Neo4j.Tests.Helpers.TestGraphHelper.TestGraphContext();
+        private IGraphDescriptor _graphDescriptor;
+        private IContentManager _contentManager;
 
         [SetUp]
         public override void Init()
@@ -43,15 +45,16 @@ namespace Associativy.Neo4j.Tests.Services
             var builder = new ContainerBuilder();
 
 
-            builder.RegisterInstance(new GraphEventMonitor(new Signals(), new SignalStorage())).As<IGraphEventMonitor>();
-            builder.RegisterInstance(new StubGraphManager()).As<IGraphManager>();
-            builder.RegisterInstance(new Associativy.Tests.Stubs.StubGraphEditor()).As<IGraphEditor>();
+            builder.RegisterType<StubGraphManager>().As<IGraphManager>();
+            builder.RegisterType<Neo4jConnectionManager>().As<IConnectionManager>();
             builder.RegisterType<Neo4jPathFinder>().As<IPathFinder>();
-
+            builder.RegisterInstance(new Uri("http://google.com")).As<Uri>(); // A real URL is given by StubClientPool
+            StubGraphManager.Setup(builder);
 
             builder.Update(_container);
 
-            _pathFinder = _container.Resolve<IPathFinder>();
+            _graphDescriptor = _container.Resolve<IGraphManager>().FindGraph(null);
+            _contentManager = _container.Resolve<IContentManager>();
         }
 
         [TestFixtureTearDown]
@@ -62,7 +65,7 @@ namespace Associativy.Neo4j.Tests.Services
         [Test]
         public void SinglePathsAreFound()
         {
-            var nodes = TestGraphHelper.BuildTestGraph(_container, _graphContext).Nodes;
+            var nodes = TestGraphHelper.BuildTestGraph(_contentManager, _graphDescriptor).Nodes;
 
             var succeededGraph = CalcSucceededGraph(nodes["medicine"], nodes["colour"]);
 
@@ -75,7 +78,7 @@ namespace Associativy.Neo4j.Tests.Services
         [Test]
         public void DualPathsAreFound()
         {
-            var nodes = TestGraphHelper.BuildTestGraph(_container, _graphContext).Nodes;
+            var nodes = TestGraphHelper.BuildTestGraph(_contentManager, _graphDescriptor).Nodes;
 
             var succeededGraph = CalcSucceededGraph(nodes["yellow"], nodes["light year"]);
 
@@ -89,7 +92,7 @@ namespace Associativy.Neo4j.Tests.Services
         [Test]
         public void TooLongPathsAreNotFound()
         {
-            var nodes = TestGraphHelper.BuildTestGraph(_container, _graphContext).Nodes;
+            var nodes = TestGraphHelper.BuildTestGraph(_contentManager, _graphDescriptor).Nodes;
 
             var succeededGraph = CalcSucceededGraph(nodes["blue"], nodes["medicine"]);
 
@@ -100,7 +103,7 @@ namespace Associativy.Neo4j.Tests.Services
         [Test]
         public void NotConnectedPathsAreNotFound()
         {
-            var nodes = TestGraphHelper.BuildTestGraph(_container, _graphContext).Nodes;
+            var nodes = TestGraphHelper.BuildTestGraph(_contentManager, _graphDescriptor).Nodes;
 
             var succeededGraph = CalcSucceededGraph(nodes["writer"], nodes["plant"]);
 
@@ -110,7 +113,7 @@ namespace Associativy.Neo4j.Tests.Services
 
         public IUndirectedGraph<int, IUndirectedEdge<int>> CalcSucceededGraph(IContent node1, IContent node2)
         {
-            return _pathFinder.FindPaths(node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph;
+            return _graphDescriptor.Services.PathFinder.FindPaths(node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph;
         }
     }
 }
