@@ -96,21 +96,15 @@
       <Project>{A8EE4964-4880-4EE1-AC0A-75492D89BBE8}</Project>
       <Name>Associativy</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Piedone.HelpfulLibraries\Piedone.HelpfulLibraries.csproj">
-      <Project>{EA61AD10-39D6-41A9-B12B-227F50C54158}</Project>
-      <Name>Piedone.HelpfulLibraries</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
-    <Compile Include="Services\INeo4jService.cs" />
     <Compile Include="Services\Neo4jConnectionManager.cs" />
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
-    <Compile Include="Services\Neo4jService.cs" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -25,7 +25,7 @@ using Associativy.Tests.Helpers;
 using Associativy.Tests;
 using Associativy.Neo4j.Tests.Stubs;
 using Associativy.Neo4j.Services;
-using Associativy.Models.PathFinder;
+using Associativy.Models.Services;
 
 namespace Associativy.Neo4j.Tests.Services
 {
@@ -110,7 +110,7 @@ namespace Associativy.Neo4j.Tests.Services
 
         public IUndirectedGraph<int, IUndirectedEdge<int>> CalcSucceededGraph(IContent node1, IContent node2)
         {
-            return _pathFinder.FindPaths(TestGraphHelper.TestGraphContext(), node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph;
+            return _pathFinder.FindPaths(node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph;
         }
     }
 }

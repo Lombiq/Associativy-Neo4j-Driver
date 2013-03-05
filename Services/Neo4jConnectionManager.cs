@@ -4,25 +4,32 @@ using System.Linq;
 using Associativy.GraphDiscovery;
 using Associativy.Models;
 using Associativy.Models.Nodes;
+using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
 
 namespace Associativy.Neo4j.Services
 {
-    public class Neo4jConnectionManager : Neo4jService, INeo4jConnectionManager
+    public class Neo4jConnectionManager : GraphServiceBase, INeo4jConnectionManager
     {
+        private readonly Uri _rootUri;
         private readonly INeo4jGraphClientPool _graphClientPool;
         private IGraphClient _graphClient;
         private const string _nodeIdIndexName = "NodeIds";
 
 
-        public Neo4jConnectionManager(INeo4jGraphClientPool graphClientPool)
+        public Neo4jConnectionManager(
+            IGraphDescriptor graphDescriptor, 
+            Uri rootUri,
+            INeo4jGraphClientPool graphClientPool)
+            : base(graphDescriptor)
         {
+            _rootUri = rootUri;
             _graphClientPool = graphClientPool;
         }
 
 
-        public bool AreNeighbours(IGraphContext graphContext, int node1Id, int node2Id)
+        public bool AreNeighbours(int node1Id, int node2Id)
         {
             if (node1Id == node2Id) return true;
 
@@ -33,16 +40,16 @@ namespace Associativy.Neo4j.Services
             return node1Reference.Both<AssociativyNode>(AssociativyNodeConnection.TypeKey, node => node.Id == node2Id).GremlinCount() != 0;
         }
 
-        public void Connect(IGraphContext graphContext, int node1Id, int node2Id)
+        public void Connect(int node1Id, int node2Id)
         {
             TryInit();
 
-            if (AreNeighbours(graphContext, node1Id, node2Id)) return;
+            if (AreNeighbours(node1Id, node2Id)) return;
 
             _graphClient.CreateRelationship(AddOrGetNodeReference(node1Id), new AssociativyNodeConnection(AddOrGetNodeReference(node2Id)));
         }
 
-        public void DeleteFromNode(IGraphContext graphContext, int nodeId)
+        public void DeleteFromNode(int nodeId)
         {
             TryInit();
 
@@ -52,11 +59,11 @@ namespace Associativy.Neo4j.Services
             _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
         }
 
-        public void Disconnect(IGraphContext graphContext, int node1Id, int node2Id)
+        public void Disconnect(int node1Id, int node2Id)
         {
             TryInit();
 
-            if (!AreNeighbours(graphContext, node1Id, node2Id)) return;
+            if (!AreNeighbours(node1Id, node2Id)) return;
 
             _graphClient.DeleteRelationship(
                 GetNodeReference(node1Id)
@@ -64,7 +71,7 @@ namespace Associativy.Neo4j.Services
                 .BackE(AssociativyNodeConnection.TypeKey).Single().Reference);
         }
 
-        public IEnumerable<INodeToNodeConnector> GetAll(IGraphContext graphContext)
+        public IEnumerable<INodeToNodeConnector> GetAll()
         {
             TryInit();
 
@@ -94,7 +101,7 @@ namespace Associativy.Neo4j.Services
             return connectors;
         }
 
-        public IEnumerable<int> GetNeighbourIds(IGraphContext graphContext, int nodeId)
+        public IEnumerable<int> GetNeighbourIds(int nodeId)
         {
             TryInit();
 
@@ -104,7 +111,7 @@ namespace Associativy.Neo4j.Services
             return nodeReference.Both<AssociativyNode>(AssociativyNodeConnection.TypeKey).Select(node => node.Data.Id);
         }
 
-        public int GetNeighbourCount(IGraphContext graphContext, int nodeId)
+        public int GetNeighbourCount(int nodeId)
         {
             TryInit();
 
@@ -171,7 +178,7 @@ namespace Associativy.Neo4j.Services
         {
         }
 
-        public const string TypeKey = "CONNECTED";
+        public const string TypeKey = "ASSOCIATIVY CONNECTION";
         public override string RelationshipTypeKey
         {
             get { return TypeKey; }

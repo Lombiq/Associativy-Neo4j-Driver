@@ -13,33 +13,36 @@ namespace Associativy.Neo4j.Tests.Stubs
 {
     public class StubGraphManager : IGraphManager
     {
-        private static PathServices _pathServices;
+        private Func<IGraphDescriptor, IGraphServices> _graphServicesFactory;
 
         public StubGraphManager()
         {
-            if (_pathServices == null)
+            if (_graphServicesFactory == null)
             {
                 var clientPool = new StubClientPool();
-                var connectionManager = new Neo4jConnectionManager(clientPool);
-                connectionManager.RootUri = new Uri("http://google.com");
+                var dummyRootUri = new Uri("http://google.com"); // A real URL is given by StubClientPool
+                var connectionManager = new Neo4jConnectionManager(TestGraphDescriptor(), dummyRootUri, clientPool);
 
-                _pathServices = new PathServices(
+                _graphServicesFactory = graphDescriptor => new GraphServices(
+                    new Mock<IMind>().Object,
                     connectionManager,
-                    new Neo4jPathFinder(clientPool, this, new StubGraphEditor(), new Mock<IGraphEventMonitor>().Object, new StubCacheManager()));
+                    new Neo4jPathFinder(TestGraphDescriptor(), dummyRootUri, clientPool, new Mock<IGraphEventMonitor>().Object, new StubCacheManager()),
+                    new Mock<INodeManager>().Object,
+                    new Mock<IGraphStatisticsService>().Object);
             }
         }
 
-        public GraphDescriptor FindGraph(IGraphContext graphContext)
+        public IGraphDescriptor FindGraph(IGraphContext graphContext)
         {
             return TestGraphDescriptor();
         }
 
-        public IEnumerable<GraphDescriptor> FindGraphs(IGraphContext graphContext)
+        public IEnumerable<IGraphDescriptor> FindGraphs(IGraphContext graphContext)
         {
             return new GraphDescriptor[] { TestGraphDescriptor() };
         }
 
-        public IEnumerable<GraphDescriptor> FindDistinctGraphs(IGraphContext graphContext)
+        public IEnumerable<IGraphDescriptor> FindDistinctGraphs(IGraphContext graphContext)
         {
             return new GraphDescriptor[] { TestGraphDescriptor() };
         }
@@ -47,10 +50,10 @@ namespace Associativy.Neo4j.Tests.Stubs
         private GraphDescriptor TestGraphDescriptor()
         {
             return new GraphDescriptor(
-                TestGraphHelper.TestGraphContext().GraphName,
+                TestGraphHelper.TestGraphContext().Name,
                 new Orchard.Localization.LocalizedString("Neo4j Test"),
                 TestGraphHelper.TestGraphContext().ContentTypes,
-                () => _pathServices);
+                _graphServicesFactory);
         }
     }
 }

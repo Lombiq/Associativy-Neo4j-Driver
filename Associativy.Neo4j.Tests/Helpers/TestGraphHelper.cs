@@ -9,7 +9,7 @@ namespace Associativy.Neo4j.Tests.Helpers
     {
         public static IGraphContext TestGraphContext()
         {
-            return new GraphContext { GraphName = "Neo4jTestGraph", ContentTypes = new string[] { "Notion" } };
+            return new GraphContext { Name = "Neo4jTestGraph", ContentTypes = new string[] { "Notion" } };
         }
     }
 }
