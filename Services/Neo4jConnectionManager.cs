@@ -71,7 +71,7 @@ namespace Associativy.Neo4j.Services
                 .BackE(AssociativyNodeConnection.TypeKey).Single().Reference);
         }
 
-        public IEnumerable<INodeToNodeConnector> GetAll()
+        public IEnumerable<INodeToNodeConnector> GetAll(int skip, int count)
         {
             TryInit();
 
@@ -101,7 +101,7 @@ namespace Associativy.Neo4j.Services
             return connectors;
         }
 
-        public IEnumerable<int> GetNeighbourIds(int nodeId)
+        public IEnumerable<int> GetNeighbourIds(int nodeId, int skip, int count)
         {
             TryInit();
 
