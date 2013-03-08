@@ -30,7 +30,7 @@ namespace Associativy.Neo4j.Services
         }
 
 
-        public PathResult FindPaths(int startNodeId, int targetNodeId, IPathFinderSettings settings)
+        public IPathResult FindPaths(int startNodeId, int targetNodeId, IPathFinderSettings settings)
         {
             if (settings == null) settings = PathFinderSettings.Default;
 
