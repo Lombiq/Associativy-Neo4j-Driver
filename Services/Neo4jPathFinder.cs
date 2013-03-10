@@ -2,6 +2,7 @@
 using Associativy.EventHandlers;
 using Associativy.GraphDiscovery;
 using Associativy.Models.Services;
+using Associativy.Queryable;
 using Associativy.Services;
 using Orchard.Caching;
 
@@ -34,15 +35,11 @@ namespace Associativy.Neo4j.Services
         {
             if (settings == null) settings = PathFinderSettings.Default;
 
-            if (settings.UseCache)
-            {
-                return _cacheManager.Get("Associativy.Paths." + _graphDescriptor.Name + startNodeId.ToString() + targetNodeId.ToString() + settings.MaxDistance, ctx =>
-                {
-                    _graphEventMonitor.MonitorChanged(_graphDescriptor, ctx);
-                    return FindPaths(startNodeId, targetNodeId, settings);
-                });
-            }
+            throw new NotImplementedException();
+        }
 
+        public IQueryableGraph<int> GetPartialGraph(int centralNodeId, IPathFinderSettings settings)
+        {
             throw new NotImplementedException();
         }
     }

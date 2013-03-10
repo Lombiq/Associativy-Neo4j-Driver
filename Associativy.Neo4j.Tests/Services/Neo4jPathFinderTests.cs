@@ -113,7 +113,7 @@ namespace Associativy.Neo4j.Tests.Services
 
         public IUndirectedGraph<int, IUndirectedEdge<int>> CalcSucceededGraph(IContent node1, IContent node2)
         {
-            return _graphDescriptor.Services.PathFinder.FindPaths(node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph;
+            return _graphDescriptor.Services.PathFinder.FindPaths(node1.Id, node2.Id, PathFinderSettings.Default).SucceededGraph.ToGraph();
         }
     }
 }
