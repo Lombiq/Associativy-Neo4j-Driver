@@ -101,9 +101,11 @@
   <ItemGroup>
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
+    <Compile Include="Services\INeo4jGraphStatisticsService.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
     <Compile Include="Services\Neo4jConnectionManager.cs" />
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
+    <Compile Include="Services\Neo4jGraphStatisticsService.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
   </ItemGroup>
   <PropertyGroup>
