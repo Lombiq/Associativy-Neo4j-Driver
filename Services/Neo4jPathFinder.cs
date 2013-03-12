@@ -10,7 +10,7 @@ namespace Associativy.Neo4j.Services
 {
     // TODO
     // Is it really necessary, or usage through StandardPathFinder is good enough?
-    public class Neo4jPathFinder : GraphServiceBase, INeo4jPathFinder
+    public class Neo4jPathFinder : GraphAwareServiceBase, INeo4jPathFinder
     {
         private readonly INeo4jGraphClientPool _graphClientPool;
         private readonly IGraphEventMonitor _graphEventMonitor;

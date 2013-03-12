@@ -10,4 +10,4 @@ Features:
 		Name: Associativy Neo4j
         Description: Neo4j graph database driver for Associativy
 		Category: Associativy
-		Dependencies: Associativy
+		Dependencies: Associativy.GraphStatisticsServices

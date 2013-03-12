@@ -96,16 +96,18 @@
       <Project>{A8EE4964-4880-4EE1-AC0A-75492D89BBE8}</Project>
       <Name>Associativy</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Orchard.Caching\Orchard.Caching.csproj">
+      <Project>{7528bf74-25c7-4abe-883a-443b4eec4776}</Project>
+      <Name>Orchard.Caching</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
-    <Compile Include="Services\INeo4jGraphStatisticsService.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
     <Compile Include="Services\Neo4jConnectionManager.cs" />
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
-    <Compile Include="Services\Neo4jGraphStatisticsService.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
   </ItemGroup>
   <PropertyGroup>

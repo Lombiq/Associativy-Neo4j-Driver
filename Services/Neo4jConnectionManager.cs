@@ -5,16 +5,19 @@ using Associativy.EventHandlers;
 using Associativy.GraphDiscovery;
 using Associativy.Models;
 using Associativy.Models.Nodes;
+using Associativy.Models.Services;
 using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
+using Associativy.Services;
 
 namespace Associativy.Neo4j.Services
 {
-    public class Neo4jConnectionManager : GraphServiceBase, INeo4jConnectionManager
+    public class Neo4jConnectionManager : GraphAwareServiceBase, INeo4jConnectionManager
     {
         private readonly Uri _rootUri;
         private readonly INeo4jGraphClientPool _graphClientPool;
+        private readonly IExternalGraphStatisticsService _statisticsService;
         private readonly IGraphEventHandler _graphEventHandler;
         private IGraphClient _graphClient;
         private const string NodeIdIndexName = "NodeIds";
@@ -24,11 +27,13 @@ namespace Associativy.Neo4j.Services
             IGraphDescriptor graphDescriptor,
             Uri rootUri,
             INeo4jGraphClientPool graphClientPool,
+            Func<IGraphDescriptor, IExternalGraphStatisticsService> statisticsService,
             IGraphEventHandler graphEventHandler)
             : base(graphDescriptor)
         {
             _rootUri = rootUri;
             _graphClientPool = graphClientPool;
+            _statisticsService = statisticsService(_graphDescriptor);
             _graphEventHandler = graphEventHandler;
         }
 
@@ -50,7 +55,24 @@ namespace Associativy.Neo4j.Services
 
             if (AreNeighbours(node1Id, node2Id)) return;
 
-            _graphClient.CreateRelationship(AddOrGetNodeReference(node1Id), new AssociativyNodeRelationship(AddOrGetNodeReference(node2Id)));
+            Func<int, NodeReference<AssociativyNode>> addOrGetNodeReference =
+                (nodeId) =>
+                {
+                    var existingNode = GetNodeReference(nodeId);
+                    if (existingNode != null) return existingNode;
+
+                    var node = new AssociativyNode(nodeId);
+                    var indexEntry = new IndexEntry(NodeIdIndexName)
+                        {
+                            { "id", nodeId }
+                        };
+
+                    _statisticsService.AdjustNodeCount(1);
+                    return _graphClient.Create<AssociativyNode>(node, null, new IndexEntry[] { indexEntry });
+                };
+
+            _graphClient.CreateRelationship(addOrGetNodeReference(node1Id), new AssociativyNodeRelationship(addOrGetNodeReference(node2Id)));
+            _statisticsService.AdjustConnectionCount(1);
             _graphEventHandler.ConnectionAdded(_graphDescriptor, node1Id, node2Id);
         }
 
@@ -61,6 +83,8 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return;
 
+            _statisticsService.AdjustConnectionCount(-nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount());
+            _statisticsService.AdjustNodeCount(-1);
             _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
             _graphEventHandler.ConnectionsDeletedFromNode(_graphDescriptor, nodeId);
         }
@@ -76,6 +100,7 @@ namespace Associativy.Neo4j.Services
                 .Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).Single()
                 .BackE(AssociativyNodeRelationship.TypeKey).Single().Reference);
 
+            _statisticsService.AdjustConnectionCount(-1);
             _graphEventHandler.ConnectionDeleted(_graphDescriptor, node1Id, node2Id);
         }
 
@@ -124,6 +149,11 @@ namespace Associativy.Neo4j.Services
             return nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount();
         }
 
+        public IGraphInfo GetGraphInfo()
+        {
+            return _statisticsService.GetGraphInfo();
+        }
+
 
         private void TryInit()
         {
@@ -136,19 +166,6 @@ namespace Associativy.Neo4j.Services
             {
                 _graphClient.CreateIndex(NodeIdIndexName, new IndexConfiguration { Provider = IndexProvider.lucene, Type = IndexType.exact }, IndexFor.Node);
             }
-        }
-
-        private NodeReference<AssociativyNode> AddOrGetNodeReference(int nodeId)
-        {
-            var existingNode = GetNodeReference(nodeId);
-            if (existingNode != null) return existingNode;
-
-            var node = new AssociativyNode(nodeId);
-            var indexEntry = new IndexEntry(NodeIdIndexName)
-                {
-                    { "id", nodeId }
-                };
-            return _graphClient.Create<AssociativyNode>(node, null, new IndexEntry[] { indexEntry });
         }
 
         private NodeReference<AssociativyNode> GetNodeReference(int nodeId)
