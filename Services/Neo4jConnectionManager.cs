@@ -9,7 +9,6 @@ using Associativy.Models.Services;
 using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
-using Associativy.Services;
 
 namespace Associativy.Neo4j.Services
 {
