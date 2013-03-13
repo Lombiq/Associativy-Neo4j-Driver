@@ -9,6 +9,8 @@ using Associativy.Models.Services;
 using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
+using Orchard.Exceptions;
+using Orchard.Logging;
 
 namespace Associativy.Neo4j.Services
 {
@@ -20,6 +22,8 @@ namespace Associativy.Neo4j.Services
         private readonly IGraphEventHandler _graphEventHandler;
         private IGraphClient _graphClient;
         private const string NodeIdIndexName = "NodeIds";
+
+        public ILogger Logger { get; set; }
 
 
         public Neo4jConnectionManager(
@@ -34,6 +38,8 @@ namespace Associativy.Neo4j.Services
             _graphClientPool = graphClientPool;
             _statisticsService = statisticsService(_graphDescriptor);
             _graphEventHandler = graphEventHandler;
+
+            Logger = NullLogger.Instance;
         }
 
 
@@ -160,7 +166,19 @@ namespace Associativy.Neo4j.Services
 
             if (_rootUri == null) throw new InvalidOperationException("The RootUri property should be set before the connection manager intance can be used.");
 
-            _graphClient = _graphClientPool.GetClient(_rootUri);
+            try
+            {
+                _graphClient = _graphClientPool.GetClient(_rootUri);
+            }
+            catch (Exception ex)
+            {
+                if (ex.IsFatal()) throw;
+
+                var message = "Acquiring a graph client for the graph " + _graphDescriptor.Name + " with the url " + _rootUri + " failed.";
+                Logger.Error(ex, message);
+                throw new ApplicationException(message, ex);
+            }
+
             if (!_graphClient.CheckIndexExists(NodeIdIndexName, IndexFor.Node))
             {
                 _graphClient.CreateIndex(NodeIdIndexName, new IndexConfiguration { Provider = IndexProvider.lucene, Type = IndexType.exact }, IndexFor.Node);
