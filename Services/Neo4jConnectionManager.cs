@@ -19,6 +19,7 @@ namespace Associativy.Neo4j.Services
         private readonly Uri _rootUri;
         private readonly INeo4jGraphClientPool _graphClientPool;
         private readonly IExternalGraphStatisticsService _statisticsService;
+        private readonly INeo4jGraphInfoService _infoService;
         private readonly IGraphEventHandler _graphEventHandler;
         private IGraphClient _graphClient;
         private const string NodeIdIndexName = "NodeIds";
@@ -31,12 +32,14 @@ namespace Associativy.Neo4j.Services
             Uri rootUri,
             INeo4jGraphClientPool graphClientPool,
             Func<IGraphDescriptor, IExternalGraphStatisticsService> statisticsService,
+            INeo4jGraphInfoService infoService,
             IGraphEventHandler graphEventHandler)
             : base(graphDescriptor)
         {
             _rootUri = rootUri;
             _graphClientPool = graphClientPool;
             _statisticsService = statisticsService(_graphDescriptor);
+            _infoService = infoService;
             _graphEventHandler = graphEventHandler;
 
             Logger = NullLogger.Instance;
@@ -76,8 +79,21 @@ namespace Associativy.Neo4j.Services
                     return _graphClient.Create<AssociativyNode>(node, null, new IndexEntry[] { indexEntry });
                 };
 
-            _graphClient.CreateRelationship(addOrGetNodeReference(node1Id), new AssociativyNodeRelationship(addOrGetNodeReference(node2Id)));
+            var node1 = addOrGetNodeReference(node1Id);
+            var node2 = addOrGetNodeReference(node2Id);
+            _graphClient.CreateRelationship(node1, new AssociativyNodeRelationship(node2));
+
+            var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
+            var node1NeighbourCount = CountEdges(node1);
+            if (node1NeighbourCount > info.BiggestNodeNeighbourCount) SetBiggestNode(node1Id, node1NeighbourCount);
+            else
+            {
+                var node2NeighbourCount = CountEdges(node2);
+                if (node2NeighbourCount > info.BiggestNodeNeighbourCount) SetBiggestNode(node2Id, node2NeighbourCount);
+            }
+
             _statisticsService.AdjustConnectionCount(1);
+
             _graphEventHandler.ConnectionAdded(_graphDescriptor, node1Id, node2Id);
         }
 
@@ -88,9 +104,13 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return;
 
-            _statisticsService.AdjustConnectionCount(-nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount());
+            _statisticsService.AdjustConnectionCount(-CountEdges(nodeReference));
             _statisticsService.AdjustNodeCount(-1);
             _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
+
+            var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
+            if (info.BiggestNodeId == nodeId) FindBiggestNode();
+
             _graphEventHandler.ConnectionsDeletedFromNode(_graphDescriptor, nodeId);
         }
 
@@ -109,9 +129,13 @@ namespace Associativy.Neo4j.Services
                 .Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).Single()
                 .BackE(AssociativyNodeRelationship.TypeKey).Single().Reference);
 
-            if (nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount() == 0) _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
+            if (CountEdges(nodeReference) == 0) _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
+
+            var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
+            if (info.BiggestNodeId == node1Id || info.BiggestNodeId == node2Id) FindBiggestNode();
 
             _statisticsService.AdjustConnectionCount(-1);
+
             _graphEventHandler.ConnectionDeleted(_graphDescriptor, node1Id, node2Id);
         }
 
@@ -120,7 +144,7 @@ namespace Associativy.Neo4j.Services
             TryInit();
 
             var connections = _graphClient.Cypher
-                                    .StartWithNodeIndexLookup("node1", NodeIdIndexName, "id:*")
+                                    .Start("node1", "node(*)")
                                     .Match("(node1)-[:" + AssociativyNodeRelationship.TypeKey + "]->(node2)")
                                     .Return((node1, node2) =>
                                         new AssociativyNodeConnection
@@ -129,7 +153,8 @@ namespace Associativy.Neo4j.Services
                                             Node2 = node2.As<AssociativyNode>()
                                         })
                                     .Skip(skip)
-                                    .Limit(count).Results;
+                                    .Limit(count)
+                                    .Results;
 
             var connectors = new List<INodeToNodeConnector>();
             foreach (var connection in connections)
@@ -157,7 +182,7 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return 0;
 
-            return nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount();
+            return CountEdges(nodeReference);
         }
 
         public IGraphInfo GetGraphInfo()
@@ -166,7 +191,7 @@ namespace Associativy.Neo4j.Services
         }
 
 
-        private void TryInit()
+        protected void TryInit()
         {
             if (_graphClient != null) return;
 
@@ -191,46 +216,82 @@ namespace Associativy.Neo4j.Services
             }
         }
 
-        private NodeReference<AssociativyNode> GetNodeReference(int nodeId)
+        protected NodeReference<AssociativyNode> GetNodeReference(int nodeId)
         {
             var existingNode = _graphClient.QueryIndex<AssociativyNode>(NodeIdIndexName, IndexFor.Node, "id:" + nodeId).SingleOrDefault();
             if (existingNode != null) return existingNode.Reference;
             return null;
         }
-    }
 
-    public class AssociativyNode
-    {
-        public int Id { get; set; }
-
-        // For deserialization
-        public AssociativyNode()
+        protected void FindBiggestNode()
         {
+            var biggestNode = _graphClient.Cypher
+                                    .Start("Node", "node(*)")
+                                    .Match("(Node)-[c:" + AssociativyNodeRelationship.TypeKey + "]-()")
+                                    .Return<BiggestNode>("count(c) AS NeighbourCount, Node", Neo4jClient.Cypher.CypherResultMode.Projection)
+                                    .OrderByDescending("NeighbourCount")
+                                    .Limit(1)
+                                    .Results
+                                    .SingleOrDefault();
+
+            if (biggestNode != null) SetBiggestNode(biggestNode.Node.Id, biggestNode.NeighbourCount);
+            else SetBiggestNode(0, 0);
         }
 
-        public AssociativyNode(int id)
+        protected void SetBiggestNode(int id, int neighbourCount)
         {
-            Id = id;
-        }
-    }
-
-    public class AssociativyNodeRelationship : Relationship, IRelationshipAllowingSourceNode<AssociativyNode>, IRelationshipAllowingTargetNode<AssociativyNode>
-    {
-        public AssociativyNodeRelationship(NodeReference targetNode)
-            : base(targetNode)
-        {
+            var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
+            info.BiggestNodeId = id;
+            info.BiggestNodeNeighbourCount = neighbourCount;
+            _statisticsService.SetCentralNodeId(id);
         }
 
-        public const string TypeKey = "ASSOCIATIVY_CONNECTION";
-        public override string RelationshipTypeKey
-        {
-            get { return TypeKey; }
-        }
-    }
 
-    public class AssociativyNodeConnection
-    {
-        public AssociativyNode Node1 { get; set; }
-        public AssociativyNode Node2 { get; set; }
+        protected static int CountEdges(NodeReference<AssociativyNode> nodeReference)
+        {
+            return nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount();
+        }
+
+
+        public class AssociativyNode
+        {
+            public int Id { get; set; }
+
+            // For deserialization
+            public AssociativyNode()
+            {
+            }
+
+            public AssociativyNode(int id)
+            {
+                Id = id;
+            }
+        }
+
+        public class AssociativyNodeRelationship : Relationship, IRelationshipAllowingSourceNode<AssociativyNode>, IRelationshipAllowingTargetNode<AssociativyNode>
+        {
+            public AssociativyNodeRelationship(NodeReference targetNode)
+                : base(targetNode)
+            {
+            }
+
+            public const string TypeKey = "ASSOCIATIVY_CONNECTION";
+            public override string RelationshipTypeKey
+            {
+                get { return TypeKey; }
+            }
+        }
+
+        public class AssociativyNodeConnection
+        {
+            public AssociativyNode Node1 { get; set; }
+            public AssociativyNode Node2 { get; set; }
+        }
+
+        public class BiggestNode
+        {
+            public int NeighbourCount { get; set; }
+            public AssociativyNode Node { get; set; }
+        }
     }
 }

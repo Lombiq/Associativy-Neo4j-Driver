@@ -103,11 +103,16 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="Migrations.cs" />
+    <Compile Include="Models\GraphStatisticsRecord.cs" />
+    <Compile Include="Models\IGraphInfo.cs" />
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
+    <Compile Include="Services\INeo4jGraphInfoService.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
     <Compile Include="Services\Neo4jConnectionManager.cs" />
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
+    <Compile Include="Services\Neo4jGraphInfoService.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
   </ItemGroup>
   <PropertyGroup>
