@@ -100,10 +100,16 @@ namespace Associativy.Neo4j.Services
 
             if (!AreNeighbours(node1Id, node2Id)) return;
 
+            var nodeReference = GetNodeReference(node1Id);
+
+            if (nodeReference == null) return;
+
             _graphClient.DeleteRelationship(
-                GetNodeReference(node1Id)
+                nodeReference
                 .Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).Single()
                 .BackE(AssociativyNodeRelationship.TypeKey).Single().Reference);
+
+            if (nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount() == 0) _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
 
             _statisticsService.AdjustConnectionCount(-1);
             _graphEventHandler.ConnectionDeleted(_graphDescriptor, node1Id, node2Id);
