@@ -129,7 +129,11 @@ namespace Associativy.Neo4j.Services
                 .Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).Single()
                 .BackE(AssociativyNodeRelationship.TypeKey).Single().Reference);
 
-            if (CountEdges(nodeReference) == 0) _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
+            if (CountEdges(nodeReference) == 0)
+            {
+                _graphClient.Delete(nodeReference, DeleteMode.NodeAndRelationships);
+                _statisticsService.AdjustNodeCount(-1);
+            }
 
             var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
             if (info.BiggestNodeId == node1Id || info.BiggestNodeId == node2Id) FindBiggestNode();
