@@ -10,9 +10,8 @@ namespace Associativy.Neo4j.Services
 {
     // TODO
     // Is it really necessary, or usage through StandardPathFinder is good enough?
-    public class Neo4jPathFinder : GraphAwareServiceBase, INeo4jPathFinder
+    public class Neo4jPathFinder : Neo4jServiceBase, INeo4jPathFinder
     {
-        private readonly INeo4jGraphClientPool _graphClientPool;
         private readonly IGraphEventMonitor _graphEventMonitor;
         private readonly ICacheManager _cacheManager;
 
@@ -23,9 +22,8 @@ namespace Associativy.Neo4j.Services
             INeo4jGraphClientPool graphClientPool,
             IGraphEventMonitor graphEventMonitor,
             ICacheManager cacheManager)
-            : base(graphDescriptor)
+            : base(graphDescriptor, rootUri, graphClientPool)
         {
-            _graphClientPool = graphClientPool;
             _graphEventMonitor = graphEventMonitor;
             _cacheManager = cacheManager;
         }

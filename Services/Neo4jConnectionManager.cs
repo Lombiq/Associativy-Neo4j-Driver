@@ -14,14 +14,12 @@ using Orchard.Logging;
 
 namespace Associativy.Neo4j.Services
 {
-    public class Neo4jConnectionManager : GraphAwareServiceBase, INeo4jConnectionManager
+    public class Neo4jConnectionManager : Neo4jServiceBase, INeo4jConnectionManager
     {
-        private readonly Uri _rootUri;
-        private readonly INeo4jGraphClientPool _graphClientPool;
         private readonly IExternalGraphStatisticsService _statisticsService;
         private readonly INeo4jGraphInfoService _infoService;
         private readonly IGraphEventHandler _graphEventHandler;
-        private IGraphClient _graphClient;
+        
         private const string NodeIdIndexName = "NodeIds";
 
         public ILogger Logger { get; set; }
@@ -34,10 +32,8 @@ namespace Associativy.Neo4j.Services
             Func<IGraphDescriptor, IExternalGraphStatisticsService> statisticsService,
             INeo4jGraphInfoService infoService,
             IGraphEventHandler graphEventHandler)
-            : base(graphDescriptor)
+            : base(graphDescriptor, rootUri, graphClientPool)
         {
-            _rootUri = rootUri;
-            _graphClientPool = graphClientPool;
             _statisticsService = statisticsService(_graphDescriptor);
             _infoService = infoService;
             _graphEventHandler = graphEventHandler;
@@ -199,7 +195,7 @@ namespace Associativy.Neo4j.Services
         {
             if (_graphClient != null) return;
 
-            if (_rootUri == null) throw new InvalidOperationException("The RootUri property should be set before the connection manager intance can be used.");
+            if (_rootUri == null) throw new InvalidOperationException("The root URI should be set before the connection manager intance can be used.");
 
             try
             {

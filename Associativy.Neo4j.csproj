@@ -114,6 +114,7 @@
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
     <Compile Include="Services\Neo4jGraphInfoService.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
+    <Compile Include="Services\Neo4jServiceBase.cs" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
