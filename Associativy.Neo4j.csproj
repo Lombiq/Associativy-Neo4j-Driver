@@ -110,6 +110,7 @@
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
     <Compile Include="Services\INeo4jGraphInfoService.cs" />
     <Compile Include="Services\INeo4jPathFinder.cs" />
+    <Compile Include="Services\INeo4jService.cs" />
     <Compile Include="Services\Neo4jConnectionManager.cs" />
     <Compile Include="Services\Neo4jGraphClientPool.cs" />
     <Compile Include="Services\Neo4jGraphInfoService.cs" />

@@ -195,20 +195,7 @@ namespace Associativy.Neo4j.Services
         {
             if (_graphClient != null) return;
 
-            if (_rootUri == null) throw new InvalidOperationException("The root URI should be set before the connection manager intance can be used.");
-
-            try
-            {
-                _graphClient = _graphClientPool.GetClient(_rootUri);
-            }
-            catch (Exception ex)
-            {
-                if (ex.IsFatal()) throw;
-
-                var message = "Acquiring a graph client for the graph " + _graphDescriptor.Name + " with the url " + _rootUri + " failed.";
-                Logger.Error(ex, message);
-                throw new ApplicationException(message, ex);
-            }
+            base.TryInit();
 
             if (!_graphClient.CheckIndexExists(NodeIdIndexName, IndexFor.Node))
             {
