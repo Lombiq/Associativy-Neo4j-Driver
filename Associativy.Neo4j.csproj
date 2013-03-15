@@ -53,6 +53,10 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\lib\newtonsoft.json\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>E:\Projects\Saját\Associativy\Associativy Development\src\Orchard.Web\Modules\Associativy\Libs\QuickGraph\QuickGraph.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.ComponentModel.DataAnnotations">
@@ -101,11 +105,12 @@
       <Name>Orchard.Caching</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Compile Include="Migrations.cs" />
     <Compile Include="Models\GraphStatisticsRecord.cs" />
     <Compile Include="Models\IGraphInfo.cs" />
+    <Compile Include="Models\Neo4j\AssociativyNode.cs" />
+    <Compile Include="Models\Neo4j\AssociativyNodeRelationship.cs" />
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
     <Compile Include="Services\INeo4jGraphInfoService.cs" />
@@ -116,6 +121,7 @@
     <Compile Include="Services\Neo4jGraphInfoService.cs" />
     <Compile Include="Services\Neo4jPathFinder.cs" />
     <Compile Include="Services\Neo4jServiceBase.cs" />
+    <Compile Include="WellKnownConstants.cs" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

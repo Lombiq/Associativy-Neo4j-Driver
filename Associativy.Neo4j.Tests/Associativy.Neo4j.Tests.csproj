@@ -155,6 +155,7 @@
     <Compile Include="Services\Neo4jPathFinderTests.cs" />
     <Compile Include="Stubs\StubClientPool.cs" />
     <Compile Include="Helpers\TestGraphHelper.cs" />
+    <Compile Include="Stubs\StubNeo4jGraphInfoService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Associativy.Instances.Notions\Associativy.Instances.Notions.csproj">

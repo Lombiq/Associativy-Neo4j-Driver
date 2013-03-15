@@ -6,6 +6,7 @@ using Associativy.GraphDiscovery;
 using Associativy.Models;
 using Associativy.Models.Nodes;
 using Associativy.Models.Services;
+using Associativy.Neo4j.Models.Neo4j;
 using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
@@ -18,24 +19,23 @@ namespace Associativy.Neo4j.Services
     {
         private readonly IExternalGraphStatisticsService _statisticsService;
         private readonly INeo4jGraphInfoService _infoService;
+        private readonly IGraphCacheService _cacheService; // For future use
         private readonly IGraphEventHandler _graphEventHandler;
         
-        private const string NodeIdIndexName = "NodeIds";
-
-        public ILogger Logger { get; set; }
-
-
+        
         public Neo4jConnectionManager(
             IGraphDescriptor graphDescriptor,
             Uri rootUri,
             INeo4jGraphClientPool graphClientPool,
             Func<IGraphDescriptor, IExternalGraphStatisticsService> statisticsService,
             INeo4jGraphInfoService infoService,
+            IGraphCacheService cacheService,
             IGraphEventHandler graphEventHandler)
             : base(graphDescriptor, rootUri, graphClientPool)
         {
             _statisticsService = statisticsService(_graphDescriptor);
             _infoService = infoService;
+            _cacheService = cacheService;
             _graphEventHandler = graphEventHandler;
 
             Logger = NullLogger.Instance;
@@ -50,7 +50,7 @@ namespace Associativy.Neo4j.Services
 
             var node1Reference = GetNodeReference(node1Id);
             if (node1Reference == null) return false;
-            return node1Reference.Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).GremlinCount() != 0;
+            return node1Reference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey, node => node.Id == node2Id).GremlinCount() != 0;
         }
 
         public void Connect(int node1Id, int node2Id)
@@ -66,7 +66,7 @@ namespace Associativy.Neo4j.Services
                     if (existingNode != null) return existingNode;
 
                     var node = new AssociativyNode(nodeId);
-                    var indexEntry = new IndexEntry(NodeIdIndexName)
+                    var indexEntry = new IndexEntry(WellKnownConstants.NodeIdIndexName)
                         {
                             { "id", nodeId }
                         };
@@ -122,8 +122,8 @@ namespace Associativy.Neo4j.Services
 
             _graphClient.DeleteRelationship(
                 nodeReference
-                .Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey, node => node.Id == node2Id).Single()
-                .BackE(AssociativyNodeRelationship.TypeKey).Single().Reference);
+                .Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey, node => node.Id == node2Id).Single()
+                .BackE(WellKnownConstants.RelationshipTypeKey).Single().Reference);
 
             if (CountEdges(nodeReference) == 0)
             {
@@ -145,7 +145,7 @@ namespace Associativy.Neo4j.Services
 
             var connections = _graphClient.Cypher
                                     .Start("node1", "node(*)")
-                                    .Match("(node1)-[:" + AssociativyNodeRelationship.TypeKey + "]->(node2)")
+                                    .Match("(node1)-[:" + WellKnownConstants.RelationshipTypeKey + "]->(node2)")
                                     .Return((node1, node2) =>
                                         new AssociativyNodeConnection
                                         {
@@ -172,7 +172,7 @@ namespace Associativy.Neo4j.Services
             var nodeReference = GetNodeReference(nodeId);
             if (nodeReference == null) return Enumerable.Empty<int>();
 
-            return nodeReference.Both<AssociativyNode>(AssociativyNodeRelationship.TypeKey).GremlinSkip(skip).GremlinTake(count).Select(node => node.Data.Id);
+            return nodeReference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey).GremlinSkip(skip).GremlinTake(count).Select(node => node.Data.Id);
         }
 
         public int GetNeighbourCount(int nodeId)
@@ -191,21 +191,21 @@ namespace Associativy.Neo4j.Services
         }
 
 
-        protected void TryInit()
+        protected override void TryInit()
         {
             if (_graphClient != null) return;
 
             base.TryInit();
 
-            if (!_graphClient.CheckIndexExists(NodeIdIndexName, IndexFor.Node))
+            if (!_graphClient.CheckIndexExists(WellKnownConstants.NodeIdIndexName, IndexFor.Node))
             {
-                _graphClient.CreateIndex(NodeIdIndexName, new IndexConfiguration { Provider = IndexProvider.lucene, Type = IndexType.exact }, IndexFor.Node);
+                _graphClient.CreateIndex(WellKnownConstants.NodeIdIndexName, new IndexConfiguration { Provider = IndexProvider.lucene, Type = IndexType.exact }, IndexFor.Node);
             }
         }
 
         protected NodeReference<AssociativyNode> GetNodeReference(int nodeId)
         {
-            var existingNode = _graphClient.QueryIndex<AssociativyNode>(NodeIdIndexName, IndexFor.Node, "id:" + nodeId).SingleOrDefault();
+            var existingNode = _graphClient.QueryIndex<AssociativyNode>(WellKnownConstants.NodeIdIndexName, IndexFor.Node, "id:" + nodeId).SingleOrDefault();
             if (existingNode != null) return existingNode.Reference;
             return null;
         }
@@ -214,7 +214,7 @@ namespace Associativy.Neo4j.Services
         {
             var biggestNode = _graphClient.Cypher
                                     .Start("Node", "node(*)")
-                                    .Match("(Node)-[c:" + AssociativyNodeRelationship.TypeKey + "]-()")
+                                    .Match("(Node)-[c:" + WellKnownConstants.RelationshipTypeKey + "]-()")
                                     .Return<BiggestNode>("count(c) AS NeighbourCount, Node", Neo4jClient.Cypher.CypherResultMode.Projection)
                                     .OrderByDescending("NeighbourCount")
                                     .Limit(1)
@@ -236,38 +236,9 @@ namespace Associativy.Neo4j.Services
 
         protected static int CountEdges(NodeReference<AssociativyNode> nodeReference)
         {
-            return nodeReference.BothE(AssociativyNodeRelationship.TypeKey).GremlinCount();
+            return nodeReference.BothE(WellKnownConstants.RelationshipTypeKey).GremlinCount();
         }
 
-
-        public class AssociativyNode
-        {
-            public int Id { get; set; }
-
-            // For deserialization
-            public AssociativyNode()
-            {
-            }
-
-            public AssociativyNode(int id)
-            {
-                Id = id;
-            }
-        }
-
-        public class AssociativyNodeRelationship : Relationship, IRelationshipAllowingSourceNode<AssociativyNode>, IRelationshipAllowingTargetNode<AssociativyNode>
-        {
-            public AssociativyNodeRelationship(NodeReference targetNode)
-                : base(targetNode)
-            {
-            }
-
-            public const string TypeKey = "ASSOCIATIVY_CONNECTION";
-            public override string RelationshipTypeKey
-            {
-                get { return TypeKey; }
-            }
-        }
 
         public class AssociativyNodeConnection
         {
