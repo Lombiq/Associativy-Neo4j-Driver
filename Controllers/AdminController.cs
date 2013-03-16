@@ -47,6 +47,7 @@ namespace Associativy.Neo4j.Controllers
 
             Task.WaitAll(((INeo4jConnectionManager)connectionManager).RebuildStatisticsAsync());
 
+            // This throws an exception due to the WorkContext being null. This will be solved with Orchard 1.7.
             //Task.WaitAll(((INeo4jConnectionManager)connectionManager).RebuildStatisticsAsync().ContinueWith(task =>
             //    {
             //        _notifier.Information(T("Statistics rebuilt."));
