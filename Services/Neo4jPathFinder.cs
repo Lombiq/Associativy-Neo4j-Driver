@@ -65,19 +65,29 @@ namespace Associativy.Neo4j.Services
 
             return _pathFinderAuxiliaries.QueryableFactory.Create<int>((parameters) =>
             {
-                var graph = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, MakeCacheKey("GetPartialGraph.BaseGraph." + centralNodeId, settings), () =>
+                var graph = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, QueryableGraphHelper.MakeCacheKey(MakeCacheKey("GetPartialGraph.BaseGraph." + centralNodeId, settings), parameters), () =>
                 {
                     var paths = _graphClient.Cypher
                                     .StartWithNodeIndexLookup("n", WellKnownConstants.NodeIdIndexName, "id:" + centralNodeId)
                                     .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-()")
                                     .Return<Path>("EXTRACT(n in nodes(path) : n) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
+                                    .Skip(parameters.Paging.SkipConnections)
+                                    .Limit(parameters.Paging.TakeConnections)
                                     .Results;
 
                     return _pathFinderAuxiliaries.PathToGraph(PathsToPathSteps(paths));
                 }, settings.UseCache);
 
 
-                return LastStepsWithPaging(parameters, graph, "GetPartialGraph." + centralNodeId + ".PathToGraph.", settings);
+                return QueryableGraphHelper.LastSteps(new Params {
+                    CacheService = _pathFinderAuxiliaries.CacheService,
+                    GraphEditor = _pathFinderAuxiliaries.GraphEditor,
+                    GraphDescriptor = _graphDescriptor,
+                    ExecutionParameters = parameters,
+                    Graph = graph,
+                    BaseCacheKey = MakeCacheKey("GetPartialGraph." + centralNodeId + ".PathToGraph.", settings),
+                    UseCache = settings.UseCache
+                });
             });
         }
 
