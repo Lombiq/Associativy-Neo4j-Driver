@@ -20,8 +20,10 @@ namespace Associativy.Neo4j.Services
     {
         private readonly IExternalGraphStatisticsService _statisticsService;
         private readonly INeo4jGraphInfoService _infoService;
-        private readonly IGraphCacheService _cacheService; // For future use
+        private readonly IGraphCacheService _cacheService;
         private readonly IGraphEventHandler _graphEventHandler;
+
+        private const string CacheKeyPrefix = "Associativy.Neo4j.Neo4jConnectionManager.";
 
 
         public Neo4jConnectionManager(
@@ -47,11 +49,14 @@ namespace Associativy.Neo4j.Services
         {
             if (node1Id == node2Id) return true;
 
-            TryInit();
+            return _cacheService.GetMonitored(_graphDescriptor, MakeCacheKey("AreNeighbours." + node1Id + "/" + node2Id), () =>
+                {
+                    TryInit();
 
-            var node1Reference = GetNodeReference(node1Id);
-            if (node1Reference == null) return false;
-            return node1Reference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey, node => node.Id == node2Id).GremlinCount() != 0;
+                    var node1Reference = GetNodeReference(node1Id);
+                    if (node1Reference == null) return false;
+                    return node1Reference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey, node => node.Id == node2Id).GremlinCount() != 0;
+                });
         }
 
         public void Connect(int node1Id, int node2Id)
@@ -142,48 +147,57 @@ namespace Associativy.Neo4j.Services
 
         public IEnumerable<INodeToNodeConnector> GetAll(int skip, int count)
         {
-            TryInit();
+            return _cacheService.GetMonitored(_graphDescriptor, MakeCacheKey("GetAll." + skip + "/" + count), () =>
+                {
+                    TryInit();
 
-            var connections = _graphClient.Cypher
-                                    .Start("node1", "node(*)")
-                                    .Match("(node1)-[:" + WellKnownConstants.RelationshipTypeKey + "]->(node2)")
-                                    .Return((node1, node2) =>
-                                        new AssociativyNodeConnection
-                                        {
-                                            Node1 = node1.As<AssociativyNode>(),
-                                            Node2 = node2.As<AssociativyNode>()
-                                        })
-                                    .Skip(skip)
-                                    .Limit(count)
-                                    .Results;
+                    var connections = _graphClient.Cypher
+                                            .Start("node1", "node(*)")
+                                            .Match("(node1)-[:" + WellKnownConstants.RelationshipTypeKey + "]->(node2)")
+                                            .Return((node1, node2) =>
+                                                new AssociativyNodeConnection
+                                                {
+                                                    Node1 = node1.As<AssociativyNode>(),
+                                                    Node2 = node2.As<AssociativyNode>()
+                                                })
+                                            .Skip(skip)
+                                            .Limit(count)
+                                            .Results;
 
-            var connectors = new List<INodeToNodeConnector>();
-            foreach (var connection in connections)
-            {
-                connectors.Add(new NodeConnector { Node1Id = connection.Node1.Id, Node2Id = connection.Node2.Id });
-            }
+                    var connectors = new List<INodeToNodeConnector>();
+                    foreach (var connection in connections)
+                    {
+                        connectors.Add(new NodeConnector { Node1Id = connection.Node1.Id, Node2Id = connection.Node2.Id });
+                    }
 
-            return connectors;
+                    return connectors;
+                });
         }
 
         public IEnumerable<int> GetNeighbourIds(int nodeId, int skip, int count)
         {
-            TryInit();
+            return _cacheService.GetMonitored(_graphDescriptor, MakeCacheKey("GetNeighbourIds." + nodeId + "/" + skip + "/" + count), () =>
+                {
+                    TryInit();
 
-            var nodeReference = GetNodeReference(nodeId);
-            if (nodeReference == null) return Enumerable.Empty<int>();
+                    var nodeReference = GetNodeReference(nodeId);
+                    if (nodeReference == null) return Enumerable.Empty<int>();
 
-            return nodeReference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey).GremlinSkip(skip).GremlinTake(count).Select(node => node.Data.Id);
+                    return nodeReference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey).GremlinSkip(skip).GremlinTake(count).Select(node => node.Data.Id);
+                });
         }
 
         public int GetNeighbourCount(int nodeId)
         {
-            TryInit();
+            return _cacheService.GetMonitored(_graphDescriptor, MakeCacheKey("GetNeighbourCount." + nodeId), () =>
+                {
+                    TryInit();
 
-            var nodeReference = GetNodeReference(nodeId);
-            if (nodeReference == null) return 0;
+                    var nodeReference = GetNodeReference(nodeId);
+                    if (nodeReference == null) return 0;
 
-            return CountEdges(nodeReference);
+                    return CountEdges(nodeReference);
+                });
         }
 
         public IGraphInfo GetGraphInfo()
@@ -286,6 +300,11 @@ namespace Associativy.Neo4j.Services
             info.BiggestNodeId = id;
             info.BiggestNodeNeighbourCount = neighbourCount;
             _statisticsService.SetCentralNodeId(id);
+        }
+
+        protected string MakeCacheKey(string name)
+        {
+            return CacheKeyPrefix + _graphDescriptor.Name + "." + name;
         }
 
 

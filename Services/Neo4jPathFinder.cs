@@ -18,7 +18,7 @@ namespace Associativy.Neo4j.Services
         private readonly IPathFinderAuxiliaries _pathFinderAuxiliaries;
         private readonly IGraphEventMonitor _graphEventMonitor;
 
-        private const string CachePrefix = "Associativy.Neo4j.Neo4jPathFinder.";
+        private const string CacheKeyPrefix = "Associativy.Neo4j.Neo4jPathFinder.";
 
 
         public Neo4jPathFinder(
@@ -38,18 +38,22 @@ namespace Associativy.Neo4j.Services
         {
             if (settings == null) settings = PathFinderSettings.Default;
 
-            TryInit();
+            var pathSteps = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, MakeCacheKey("FindPaths.PathSteps." + startNodeId + "/" + targetNodeId, settings), () =>
+            {
+                TryInit();
 
-            var paths = _graphClient.Cypher
-                            .Start(
-                                new CypherStartBitWithNodeIndexLookupWithSingleParameter("n", WellKnownConstants.NodeIdIndexName, "id:" + startNodeId),
-                                new CypherStartBitWithNodeIndexLookupWithSingleParameter("t", WellKnownConstants.NodeIdIndexName, "id:" + targetNodeId)
-                            )
-                            .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-(t)")
-                            .Return<Path>("EXTRACT(n in nodes(path) : n) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
-                            .Results;
+                var paths = _graphClient.Cypher
+                                .Start(
+                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("n", WellKnownConstants.NodeIdIndexName, "id:" + startNodeId),
+                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("t", WellKnownConstants.NodeIdIndexName, "id:" + targetNodeId)
+                                )
+                                .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-(t)")
+                                .Return<Path>("EXTRACT(n in nodes(path) : n) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
+                                .Results;
 
-            var pathSteps = PathsToPathSteps(paths);
+                return PathsToPathSteps(paths);
+            }, settings.UseCache);
+
             return new Associativy.Services.PathFinderAuxiliaries.PathResult
             {
                 SucceededPaths = pathSteps,
@@ -61,12 +65,12 @@ namespace Associativy.Neo4j.Services
         {
             if (settings == null) settings = PathFinderSettings.Default;
 
-            TryInit();
-
             return _pathFinderAuxiliaries.QueryableFactory.Create<int>((parameters) =>
             {
                 var graph = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, QueryableGraphHelper.MakeCacheKey(MakeCacheKey("GetPartialGraph.BaseGraph." + centralNodeId, settings), parameters), () =>
                 {
+                    TryInit();
+
                     var paths = _graphClient.Cypher
                                     .StartWithNodeIndexLookup("n", WellKnownConstants.NodeIdIndexName, "id:" + centralNodeId)
                                     .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-()")
@@ -79,7 +83,8 @@ namespace Associativy.Neo4j.Services
                 }, settings.UseCache);
 
 
-                return QueryableGraphHelper.LastSteps(new Params {
+                return QueryableGraphHelper.LastSteps(new Params
+                {
                     CacheService = _pathFinderAuxiliaries.CacheService,
                     GraphEditor = _pathFinderAuxiliaries.GraphEditor,
                     GraphDescriptor = _graphDescriptor,
@@ -122,7 +127,7 @@ namespace Associativy.Neo4j.Services
 
         private string MakeCacheKey(string name, IPathFinderSettings settings)
         {
-            return CachePrefix + _graphDescriptor.Name + "." + name + ".PathFinderSettings:" + settings.MaxDistance;
+            return CacheKeyPrefix + _graphDescriptor.Name + "." + name + ".PathFinderSettings:" + settings.MaxDistance + ".";
         }
 
 
