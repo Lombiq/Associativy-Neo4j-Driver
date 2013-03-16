@@ -96,6 +96,10 @@
       <Project>{9916839C-39FC-4CEB-A5AF-89CA7E87119F}</Project>
       <Name>Orchard.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Associativy.Administration\Associativy.Administration.csproj">
+      <Project>{e45b790b-93c2-4e19-b974-1b601e290899}</Project>
+      <Name>Associativy.Administration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Associativy\Associativy.csproj">
       <Project>{A8EE4964-4880-4EE1-AC0A-75492D89BBE8}</Project>
       <Name>Associativy</Name>
@@ -104,13 +108,21 @@
       <Project>{7528bf74-25c7-4abe-883a-443b4eec4776}</Project>
       <Name>Orchard.Caching</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Piedone.HelpfulLibraries\Piedone.HelpfulLibraries.csproj">
+      <Project>{ea61ad10-39d6-41a9-b12b-227f50c54158}</Project>
+      <Name>Piedone.HelpfulLibraries</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Drivers\Pages\Admin\AssociativyNeo4jManageGraphPartDriver.cs" />
+    <Compile Include="EventHandlers\AdminEventHandler.cs" />
     <Compile Include="Migrations.cs" />
     <Compile Include="Models\GraphStatisticsRecord.cs" />
     <Compile Include="Models\IGraphInfo.cs" />
     <Compile Include="Models\Neo4j\AssociativyNode.cs" />
     <Compile Include="Models\Neo4j\AssociativyNodeRelationship.cs" />
+    <Compile Include="Models\Pages\Admin\AssociativyNeo4jManageGraphPart.cs" />
     <Compile Include="Services\INeo4jConnectionManager.cs" />
     <Compile Include="Services\INeo4jGraphClientPool.cs" />
     <Compile Include="Services\INeo4jGraphInfoService.cs" />
@@ -122,6 +134,15 @@
     <Compile Include="Services\Neo4jPathFinder.cs" />
     <Compile Include="Services\Neo4jServiceBase.cs" />
     <Compile Include="WellKnownConstants.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\DisplayTemplates\Pages\Admin\Neo4jManageGraph.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Placement.info" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

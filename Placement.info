@@ -1,0 +1,4 @@
+﻿<Placement>
+  <!--Admin pages-->
+  <Place Pages_AssociatvyNeo4jManageGraph="Content:6.1"/>
+</Placement>

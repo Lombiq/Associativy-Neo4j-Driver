@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Associativy.EventHandlers;
 using Associativy.GraphDiscovery;
 using Associativy.Models;
@@ -21,8 +22,8 @@ namespace Associativy.Neo4j.Services
         private readonly INeo4jGraphInfoService _infoService;
         private readonly IGraphCacheService _cacheService; // For future use
         private readonly IGraphEventHandler _graphEventHandler;
-        
-        
+
+
         public Neo4jConnectionManager(
             IGraphDescriptor graphDescriptor,
             Uri rootUri,
@@ -190,6 +191,51 @@ namespace Associativy.Neo4j.Services
             return _statisticsService.GetGraphInfo();
         }
 
+        public Task RebuildStatisticsAsync()
+        {
+            TryInit();
+
+            var nodeCountTask = _graphClient.Cypher
+                                .Start("n", "node(*)")
+                                .Return<int>("count(*)")
+                                .ResultsAsync;
+
+            var connectionCountTask = _graphClient.Cypher
+                                        .Start("n", "node(*)")
+                                        .Match("(n)-[:ASSOCIATIVY_CONNECTION]->()")
+                                        .Return<int>("count(*)")
+                                        .ResultsAsync;
+
+            // Rewrite this to use new .NET 4.5 constructs after upgrade
+
+            return Task.Factory.ContinueWhenAll(
+                new[] { nodeCountTask, connectionCountTask },
+                tasks =>
+                {
+                    var nodeCount = tasks[0].Result.FirstOrDefault() - 1; // Removing default root node
+                    var connectionCount = tasks[1].Result.FirstOrDefault();
+
+                    var biggestNodeTask = GetBiggestNodeAsync();
+                    biggestNodeTask.ContinueWith(task =>
+                        {
+                            var biggestNode = task.Result;
+
+                            if (biggestNode == null)
+                            {
+                                biggestNode = new BiggestNode { Node = new AssociativyNode(0), NeighbourCount = 0 };
+                            }
+
+                            var info = _infoService.GetGraphInfo(_graphDescriptor.Name);
+                            info.BiggestNodeId = biggestNode.Node.Id;
+                            info.BiggestNodeNeighbourCount = biggestNode.NeighbourCount;
+
+                            _statisticsService.SetCentralNodeId(info.BiggestNodeId);
+                            _statisticsService.SetConnectionCount(connectionCount);
+                            _statisticsService.SetNodeCount(nodeCount);
+                        });
+                });
+        }
+
 
         protected override void TryInit()
         {
@@ -210,16 +256,25 @@ namespace Associativy.Neo4j.Services
             return null;
         }
 
+        protected Task<BiggestNode> GetBiggestNodeAsync()
+        {
+            var biggestNodeTask = _graphClient.Cypher
+                                        .Start("Node", "node(*)")
+                                        .Match("(Node)-[c:" + WellKnownConstants.RelationshipTypeKey + "]-()")
+                                        .Return<BiggestNode>("count(c) AS NeighbourCount, Node", Neo4jClient.Cypher.CypherResultMode.Projection)
+                                        .OrderByDescending("NeighbourCount")
+                                        .Limit(1)
+                                        .ResultsAsync;
+
+            return biggestNodeTask.ContinueWith(task =>
+                {
+                    return task.Result.FirstOrDefault();
+                });
+        }
+
         protected void FindBiggestNode()
         {
-            var biggestNode = _graphClient.Cypher
-                                    .Start("Node", "node(*)")
-                                    .Match("(Node)-[c:" + WellKnownConstants.RelationshipTypeKey + "]-()")
-                                    .Return<BiggestNode>("count(c) AS NeighbourCount, Node", Neo4jClient.Cypher.CypherResultMode.Projection)
-                                    .OrderByDescending("NeighbourCount")
-                                    .Limit(1)
-                                    .Results
-                                    .SingleOrDefault();
+            var biggestNode = GetBiggestNodeAsync().Result;
 
             if (biggestNode != null) SetBiggestNode(biggestNode.Node.Id, biggestNode.NeighbourCount);
             else SetBiggestNode(0, 0);

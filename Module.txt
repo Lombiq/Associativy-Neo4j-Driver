@@ -11,3 +11,8 @@ Features:
         Description: Neo4j graph database driver for Associativy
 		Category: Associativy
 		Dependencies: Associativy.GraphStatisticsServices
+    Associativy.Neo4j.Administration:
+		Name: Associativy Neo4j Administration
+        Description: Administrative UIs for Neo4j graphs
+		Category: Associativy
+		Dependencies: Associativy.Neo4j, Associativy.Administration, Piedone.HelpfulLibraries.Contents

@@ -1,0 +1,40 @@
+﻿@model Associativy.Neo4j.Models.Pages.Admin.AssociativyNeo4jManageGraphPart
+@using Orchard.ContentManagement
+
+@{
+    Script.Require("jQuery").AtFoot();
+
+    var graphName = Model.As<Associativy.Administration.Models.Pages.Admin.AssociatvyManageGraphPart>().GraphDescriptor.Name;
+}
+
+<div id="associativy-neo4j-administration-container">
+    <h3>@T("Neo4j administration")</h3>
+
+    <button type="button" id="button.RebuildNeo4jStatistics" name="button.RebuildNeo4jStatistics" value="RebuildNeo4jStatistics"
+        onclick="$.associativy.neo4j.rebuildNeo4jStatistics(); return false;">@T("Rebuild statistics")</button>
+
+    <span class="hint">@T("The statistcs shown on the top can get less and less precise with time. You can invoke a rebuild for the statistics but be aware that this is a time-consuming operation and can take a minute.")</span>
+</div>
+
+@using (Script.Foot())
+{
+    <script type="text/javascript">
+        (function ($) {
+            $.extend(true, {
+                associativy: {
+                    neo4j: {
+                        rebuildNeo4jStatistics: function (textboxSelector, fetchUrl) {
+                            $("#button\\.RebuildStatistics").attr("disabled", "disabled");
+                            var url = '@Url.Action("RebuildStatistics", "Admin", new { Area = "Associativy.Neo4j", GraphName = graphName })';
+                            var postData = { __RequestVerificationToken: "@Html.AntiForgeryTokenValueOrchard()" };
+                            $.post(url, postData, function (response) {
+                                alert("kkk");
+                                location.reload();
+                            });
+                        }
+                    }
+                }
+            });
+        })(jQuery);
+    </script>
+}
