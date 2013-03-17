@@ -52,7 +52,7 @@ namespace Associativy.Neo4j.Services
                                 .Results;
 
                 return PathsToPathSteps(paths);
-            }, settings.UseCache);
+            });
 
             return new Associativy.Services.PathFinderAuxiliaries.PathResult
             {
@@ -80,18 +80,17 @@ namespace Associativy.Neo4j.Services
                                     .Results;
 
                     return _pathFinderAuxiliaries.PathToGraph(PathsToPathSteps(paths));
-                }, settings.UseCache);
+                });
 
 
-                return QueryableGraphHelper.LastSteps(new Params
+                return QueryableGraphHelper.LastSteps(new LastStepParams
                 {
                     CacheService = _pathFinderAuxiliaries.CacheService,
                     GraphEditor = _pathFinderAuxiliaries.GraphEditor,
                     GraphDescriptor = _graphDescriptor,
                     ExecutionParameters = parameters,
                     Graph = graph,
-                    BaseCacheKey = MakeCacheKey("GetPartialGraph." + centralNodeId + ".PathToGraph.", settings),
-                    UseCache = settings.UseCache
+                    BaseCacheKey = MakeCacheKey("GetPartialGraph." + centralNodeId + ".PathToGraph.", settings)
                 });
             });
         }
@@ -104,7 +103,7 @@ namespace Associativy.Neo4j.Services
                 var graph = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, MakeCacheKey(baseCacheKey + "BaseGraph.", settings), () =>
                 {
                     return _pathFinderAuxiliaries.PathToGraph(succeededPaths);
-                }, settings.UseCache);
+                });
 
 
                 return LastStepsWithPaging(parameters, graph, baseCacheKey, settings);
@@ -113,15 +112,14 @@ namespace Associativy.Neo4j.Services
 
         private dynamic LastStepsWithPaging(IExecutionParams parameters, IUndirectedGraph<int, IUndirectedEdge<int>> graph, string cacheName, IPathFinderSettings settings)
         {
-            return QueryableGraphHelper.LastStepsWithPaging(new Params
+            return QueryableGraphHelper.LastStepsWithPaging(new LastStepParams
             {
                 CacheService = _pathFinderAuxiliaries.CacheService,
                 GraphEditor = _pathFinderAuxiliaries.GraphEditor,
                 GraphDescriptor = _graphDescriptor,
                 ExecutionParameters = parameters,
                 Graph = graph,
-                BaseCacheKey = MakeCacheKey(cacheName, settings),
-                UseCache = settings.UseCache
+                BaseCacheKey = MakeCacheKey(cacheName, settings)
             });
         }
 
