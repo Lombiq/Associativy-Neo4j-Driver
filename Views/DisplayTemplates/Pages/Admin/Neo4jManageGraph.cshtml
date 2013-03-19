@@ -28,7 +28,6 @@
                             var url = '@Url.Action("RebuildStatistics", "Admin", new { Area = "Associativy.Neo4j", GraphName = graphName })';
                             var postData = { __RequestVerificationToken: "@Html.AntiForgeryTokenValueOrchard()" };
                             $.post(url, postData, function (response) {
-                                alert("kkk");
                                 location.reload();
                             });
                         }
