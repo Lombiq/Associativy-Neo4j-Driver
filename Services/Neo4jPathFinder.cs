@@ -48,7 +48,7 @@ namespace Associativy.Neo4j.Services
                                     new CypherStartBitWithNodeIndexLookupWithSingleParameter("t", WellKnownConstants.NodeIdIndexName, "id:" + targetNodeId)
                                 )
                                 .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-(t)")
-                                .Return<Path>("EXTRACT(n in nodes(path) : n) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
+                                .Return<Path>("nodes(path) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
                                 .Results;
 
                 return PathsToPathSteps(paths);
@@ -74,7 +74,7 @@ namespace Associativy.Neo4j.Services
                     var paths = _graphClient.Cypher
                                     .StartWithNodeIndexLookup("n", WellKnownConstants.NodeIdIndexName, "id:" + centralNodeId)
                                     .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-()")
-                                    .Return<Path>("EXTRACT(n in nodes(path) : n) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
+                                    .Return<Path>("nodes(path) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
                                     .Skip(parameters.Paging.SkipConnections)
                                     .Limit(parameters.Paging.TakeConnections)
                                     .Results;
