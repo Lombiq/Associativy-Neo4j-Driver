@@ -34,18 +34,18 @@ namespace Associativy.Neo4j.Services
         }
 
 
-        public IPathResult FindPaths(int startNodeId, int targetNodeId, IPathFinderSettings settings)
+        public IPathResult FindPaths(int node1Id, int node2Id, IPathFinderSettings settings)
         {
             if (settings == null) settings = PathFinderSettings.Default;
 
-            var pathSteps = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, MakeCacheKey("FindPaths.PathSteps." + startNodeId + "/" + targetNodeId, settings), () =>
+            var pathSteps = _pathFinderAuxiliaries.CacheService.GetMonitored(_graphDescriptor, MakeCacheKey("FindPaths.PathSteps." + node1Id + "/" + node2Id, settings), () =>
             {
                 TryInit();
 
                 var paths = _graphClient.Cypher
                                 .Start(
-                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("n", WellKnownConstants.NodeIdIndexName, "id:" + startNodeId),
-                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("t", WellKnownConstants.NodeIdIndexName, "id:" + targetNodeId)
+                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("n", WellKnownConstants.NodeIdIndexName, "id:" + node1Id),
+                                    new CypherStartBitWithNodeIndexLookupWithSingleParameter("t", WellKnownConstants.NodeIdIndexName, "id:" + node2Id)
                                 )
                                 .Match("path = (n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1.." + settings.MaxDistance + "]-(t)")
                                 .Return<Path>("nodes(path) AS Nodes", CypherResultMode.Projection) // Taken from: http://craigbrettdevden.blogspot.co.uk/2013/03/retrieving-paths-in-neo4jclient.html
@@ -57,7 +57,7 @@ namespace Associativy.Neo4j.Services
             return new Associativy.Services.PathFinderAuxiliaries.PathResult
             {
                 SucceededPaths = pathSteps,
-                SucceededGraph = PathToGraph(pathSteps, "PathToGraph:" + startNodeId + "/" + targetNodeId, settings)
+                SucceededGraph = PathToGraph(pathSteps, "PathToGraph:" + node1Id + "/" + node2Id, settings)
             };
         }
 
