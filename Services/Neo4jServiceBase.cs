@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Associativy.GraphDiscovery;
 using Associativy.Services;
 using Neo4jClient;
-using Orchard.Logging;
 using Orchard.Exceptions;
+using Orchard.Logging;
 
 namespace Associativy.Neo4j.Services
 {

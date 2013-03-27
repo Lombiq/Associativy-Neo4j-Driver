@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using Associativy.Neo4j.Models;
+﻿using Associativy.Neo4j.Models;
 using Orchard.Data.Migration;
 
 namespace Associativy.Neo4j

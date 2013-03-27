@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Associativy.EventHandlers;
 using Associativy.GraphDiscovery;
 using Associativy.Models.Services;
@@ -7,8 +8,6 @@ using Associativy.Neo4j.Models.Neo4j;
 using Associativy.Queryable;
 using Associativy.Services;
 using Neo4jClient.Cypher;
-using Orchard.Caching;
-using System.Linq;
 using QuickGraph;
 
 namespace Associativy.Neo4j.Services

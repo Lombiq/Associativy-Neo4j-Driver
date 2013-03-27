@@ -11,7 +11,6 @@ using Associativy.Neo4j.Models.Neo4j;
 using Associativy.Services;
 using Neo4jClient;
 using Neo4jClient.Gremlin;
-using Orchard.Exceptions;
 using Orchard.Logging;
 
 namespace Associativy.Neo4j.Services
