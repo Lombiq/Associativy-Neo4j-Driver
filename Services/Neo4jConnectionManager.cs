@@ -182,7 +182,15 @@ namespace Associativy.Neo4j.Services
                     var nodeReference = GetNodeReference(nodeId);
                     if (nodeReference == null) return Enumerable.Empty<int>();
 
-                    return nodeReference.Both<AssociativyNode>(WellKnownConstants.RelationshipTypeKey).GremlinSkip(skip).GremlinTake(count).Select(node => node.Data.Id);
+                    return _graphClient.Cypher
+                                    .StartWithNodeIndexLookup("n", WellKnownConstants.NodeIdIndexName, "id:" + nodeId)
+                                    .Match("(n)-[:" + WellKnownConstants.RelationshipTypeKey + "*1..1]-(t)-[r:" + WellKnownConstants.RelationshipTypeKey + "*1..1]-()")
+                                    .With("t, count(r) as neighbourCount")
+                                    .Return<int>("t.Id")
+                                    .OrderByDescending("neighbourCount")
+                                    .Skip(skip)
+                                    .Limit(count)
+                                    .Results;
                 });
         }
 
