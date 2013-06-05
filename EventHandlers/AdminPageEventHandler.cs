@@ -9,7 +9,7 @@ using Piedone.HelpfulLibraries.Contents.DynamicPages;
 namespace Associativy.Neo4j.EventHandlers
 {
     [OrchardFeature("Associativy.Neo4j.Administration")]
-    public class AdminEventHandler : IPageEventHandler
+    public class AdminPageEventHandler : IPageEventHandler
     {
         public void OnPageInitializing(PageContext pageContext)
         {
