@@ -17,7 +17,7 @@ namespace Associativy.Neo4j.EventHandlers
 
             var page = pageContext.Page;
 
-            if (!(page.ContentItem.As<AssociatvyManageGraphPart>().GraphDescriptor.Services.ConnectionManager is INeo4jConnectionManager)) return;
+            if (!(page.ContentItem.As<AssociativyManageGraphPart>().GraphDescriptor.Services.ConnectionManager is INeo4jConnectionManager)) return;
             
             if (page.IsPage("ManageGraph", pageContext.Group))
             {
