@@ -13,7 +13,8 @@ namespace Associativy.Neo4j
                     .Column<string>("GraphName", column => column.NotNull().Unique().WithLength(1024))
                     .Column<int>("BiggestNodeId")
                     .Column<int>("BiggestNodeNeighbourCount")
-            ).AlterTable(typeof(GraphInfoRecord).Name,
+                )
+            .AlterTable(typeof(GraphInfoRecord).Name,
                 table => table
                     .CreateIndex("GraphName", new string[] { "GraphName" })
             );
