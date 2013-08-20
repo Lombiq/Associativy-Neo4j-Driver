@@ -35,7 +35,7 @@ namespace Associativy.Neo4j.Controllers
             if (!_authorizer.Authorize(Associativy.Administration.Permissions.ManageAssociativyGraphs, T("You're not allowed to manage Associativy settings.")))
                 return;
 
-            var graph = _graphManager.FindGraph(graphName);
+            var graph = _graphManager.FindGraphByName(graphName);
             if (graph == null) return;
 
             var connectionManager = graph.Services.ConnectionManager;
