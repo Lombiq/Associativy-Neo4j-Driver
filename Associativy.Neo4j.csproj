@@ -122,7 +122,7 @@
   <ItemGroup>
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Drivers\Pages\Admin\AssociativyNeo4jManageGraphPartDriver.cs" />
-    <Compile Include="EventHandlers\AdminPageEventHandler.cs" />
+    <Compile Include="Handlers\AdminPageHandler.cs" />
     <Compile Include="Migrations.cs" />
     <Compile Include="Models\GraphStatisticsRecord.cs" />
     <Compile Include="Models\IGraphInfo.cs" />
