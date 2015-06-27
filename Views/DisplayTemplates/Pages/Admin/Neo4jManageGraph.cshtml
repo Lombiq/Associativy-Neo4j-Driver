@@ -1,4 +1,4 @@
-﻿@model Associativy.Neo4j.Models.Pages.Admin.AssociativyNeo4jManageGraphPart
+@model Associativy.Neo4j.Models.Pages.Admin.AssociativyNeo4jManageGraphPart
 @using Orchard.ContentManagement
 
 @{
@@ -13,7 +13,7 @@
     <button type="button" id="button.RebuildNeo4jStatistics" name="button.RebuildNeo4jStatistics" value="RebuildNeo4jStatistics"
         onclick="$.associativy.neo4j.rebuildNeo4jStatistics(); return false;">@T("Rebuild statistics")</button>
 
-    <span class="hint">@T("The statistcs shown on the top can get less and less precise with time. You can invoke a rebuild for the statistics but be aware that this is a time-consuming operation and can take a minute.")</span>
+    @Html.Hint(T("The statistcs shown on the top can get less and less precise with time. You can invoke a rebuild for the statistics but be aware that this is a time-consuming operation and can take a minute."))
 </div>
 
 @using (Script.Foot())
