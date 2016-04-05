@@ -3,7 +3,7 @@ AntiForgery: enabled
 Author: Piedone
 Website: http://associativy.com
 Version: 1.1
-OrchardVersion: 1.9.0
+OrchardVersion: 1.10
 Description: Neo4j graph database driver for Associativy
 Features:
     Associativy.Neo4j:
